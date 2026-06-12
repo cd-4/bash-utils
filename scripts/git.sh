@@ -1,5 +1,18 @@
 #!/bin/bash
 
+function GIT_SCRIPTS_repository_dir() {
+    echo "${REPO_DIRECTORY:-${HOME}/repos}"
+}
+
+function GIT_SCRIPTS_repo_completion() {
+    RESPONSE_STRS="$(ls $(GIT_SCRIPTS_repository_dir))"
+    if [[ ${#COMP_WORDS[@]} == "1" ]]; then
+        RESPONSE_STRS=""
+    fi
+    local cur="${COMP_WORDS[COMP_CWORD]}"
+    COMPREPLY=( $(compgen -W "${RESPONSE_STRS}" -- ${cur}) )
+}
+
 function GIT_SCRIPTS_show_orgs() {
     local ORGS
     ORGS=$(gh org list | awk '{print $1}')
@@ -36,7 +49,7 @@ function GIT_SCRIPTS_clone_repo() {
     local REPO=$1
     local DESIRED_DIR=$2
 
-    REPOSITORY_DIR="${REPO_DIRECTORY:-${HOME}/repos}"
+    REPOSITORY_DIR=$(GIT_SCRIPTS_repository_dir)
 
     ORGS=$(GIT_SCRIPTS_show_orgs)
 
@@ -65,6 +78,38 @@ function GIT_SCRIPTS_clone_repo() {
     git clone "git@github.com:${SELECTED_REPOSITORY}.git" "${DESTINATION}"
     cd "${DESTINATION}"
 }
+
+
+function GIT_SCRIPTS_goto_root() {
+    TOPLEVEL=$(git rev-parse --show-toplevel 2>/dev/null)
+    if [[ $? -ne 0 ]]; then
+        return
+    fi
+    cd $TOPLEVEL
+}
+
+function GIT_SCRIPTS_goto_workflows() {
+    TOPLEVEL=$(git rev-parse --show-toplevel 2>/dev/null)
+    if [[ $? -ne 0 ]]; then
+        return
+    fi
+    WORKFLOW_DIR="${TOPLEVEL}/.github/workflows"
+    if [[ -d $WORKFLOW_DIR ]]; then
+        cd "${WORKFLOW_DIR}"
+    fi
+}
+
+function GIT_SCRIPTS_goto_actions() {
+    TOPLEVEL=$(git rev-parse --show-toplevel 2>/dev/null)
+    if [[ $? -ne 0 ]]; then
+        return
+    fi
+    ACTIONS_DIR="${TOPLEVEL}/.github/actions"
+    if [[ -d $ACTIONS_DIR ]]; then
+        cd "${ACTIONS_DIR}"
+    fi
+}
+
 
 
 # ---------------------------
@@ -105,41 +150,3 @@ function GIT_SCRIPTS_goto_repo() {
 
 }
 
-function GIT_SCRIPTS_goto_root() {
-    TOPLEVEL=$(git rev-parse --show-toplevel 2>/dev/null)
-    if [[ $? -ne 0 ]]; then
-        return
-    fi
-    cd $TOPLEVEL
-}
-
-function GIT_SCRIPTS_goto_workflows() {
-    TOPLEVEL=$(git rev-parse --show-toplevel 2>/dev/null)
-    if [[ $? -ne 0 ]]; then
-        return
-    fi
-    WORKFLOW_DIR="${TOPLEVEL}/.github/workflows"
-    if [[ -d $WORKFLOW_DIR ]]; then
-        cd "${WORKFLOW_DIR}"
-    fi
-}
-
-function GIT_SCRIPTS_goto_actions() {
-    TOPLEVEL=$(git rev-parse --show-toplevel 2>/dev/null)
-    if [[ $? -ne 0 ]]; then
-        return
-    fi
-    ACTIONS_DIR="${TOPLEVEL}/.github/actions"
-    if [[ -d $ACTIONS_DIR ]]; then
-        cd "${ACTIONS_DIR}"
-    fi
-}
-
-function GIT_SCRIPTS_repo_completion() {
-    RESPONSE_STRS="$(ls ~/repos)"
-    if [[ ${#COMP_WORDS[@]} == "1" ]]; then
-        RESPONSE_STRS=""
-    fi
-    local cur="${COMP_WORDS[COMP_CWORD]}"
-    COMPREPLY=( $(compgen -W "${RESPONSE_STRS}" -- ${cur}) )
-}
