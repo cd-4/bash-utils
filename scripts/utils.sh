@@ -31,6 +31,26 @@ function UTILS_SCRIPTS_select_from() {
     fi
 
     echo "${ITEMS[$INPUT]}"
+}
 
+function UTILS_SCRIPTS_goto_dir() {
+    local ROOT_DIR=$1
+    local FILTER=$2
+
+    local OPTIONS
+    OPTIONS=$(find "${ROOT_DIR}" -maxdepth 1 -type d -name "*${FILTER}*" -exec basename {} \;)
+
+    if [[ "${#OPTIONS[@]}" == 0 ]]; then
+        echo "No Directories Found"
+    fi
+
+    if [[ "${#OPTIONS[@]}" == 1 ]]; then
+        cd "${ROOT_DIR}/${OPTIONS[0]}" || return
+        return
+    fi
+
+    local CHOICE
+    CHOICE=$(UTILS_SCRIPTS_select_from "${OPTIONS[@]}")
+    cd "${ROOT_DIR}/${CHOICE}" || return
 }
 
