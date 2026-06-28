@@ -69,24 +69,29 @@ function UTILS_SCRIPTS_select_from() {
     fi
 }
 
+
 function UTILS_SCRIPTS_goto_dir() {
     local ROOT_DIR=$1
     local FILTER=$2
-
     local OPTIONS
-    OPTIONS=($(find "${ROOT_DIR}" -maxdepth 1 -type d -name "*${FILTER}*" -exec basename {} \;))
 
-    if [[ "${#OPTIONS[@]}" == 0 ]]; then
+    # Properly read find output into array (preserves spaces, newlines, etc.)
+    mapfile -t OPTIONS < <(find "${ROOT_DIR}" -maxdepth 1 -type d \
+        -name "*${FILTER}*" -exec basename {} \;)
+
+    if [[ "${#OPTIONS[@]}" -eq 0 ]]; then
         echo "No Directories Found"
+        return 1
     fi
 
-    if [[ "${#OPTIONS[@]}" == 1 ]]; then
-        cd "${ROOT_DIR}/${OPTIONS[0]}" || return
-        return
+    if [[ "${#OPTIONS[@]}" -eq 1 ]]; then
+        cd "${ROOT_DIR}/${OPTIONS[0]}" || return 1
+        return 0
     fi
 
     local CHOICE
     CHOICE=$(UTILS_SCRIPTS_select_from "${OPTIONS[@]}")
-    cd "${ROOT_DIR}/${CHOICE}" || return
+    if [[ -n "${CHOICE}" ]]; then
+        cd "${ROOT_DIR}/${CHOICE}" || return 1
+    fi
 }
-
