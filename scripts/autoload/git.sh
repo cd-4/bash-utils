@@ -53,16 +53,7 @@ function GIT_SCRIPTS_clone_repo() {
 
     ORGS=$(GIT_SCRIPTS_show_orgs)
 
-    local VALID_OPTIONS=()
-
-    echo -n -e "${YELLOW_TEXT}> Searching Orgs "
-    for ORG in $ORGS $(GIT_SCRIPTS_show_github_username); do
-        local REPO_EXISTS
-        if [[ $(GIT_SCRIPTS_repo_exists $ORG $REPO) -eq 1 ]]; then
-            VALID_OPTIONS+=("${ORG}/${REPO}")
-        fi
-        echo -n "."
-    done
+    VALID_OPTIONS=($(gh api user/orgs --jq '.[].login' | xargs -P 4 -I {} gh repo list {} --limit 300 --json nameWithOwner --jq '.[].nameWithOwner' | grep "${REPO}"))
 
     echo -e "${NO_COLOR_TEXT}"
 
